@@ -1,0 +1,10 @@
+Socket is a library that enables real time bidirectional communication between web clients and servers.
+Web Socket Protocol
+It will give real time access, instant updates to client and server.
+bidirectional communication
+event based 
+
+Connection is established when client connects with the server. Connection event is fired when the client connects to the server and a socket object is created.
+Socket.IO is a library that enables low-latency, bidirectional and event-based communication between a client and a server.
+Emitting an event from client server can listen.
+Emit an event from server client can listen.

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Application using Socket.io</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f0f4f8;
+    }
+
+    #user-list {
+      margin-bottom: 20px;
+      background: #ffffff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    #user-list h3 {
+      margin-top: 0;
+      color: #0077b6;
+    }
+
+    #users {
+      list-style-type: none;
+      padding-left: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    #users li {
+      background-color: #caf0f8;
+      padding: 6px 12px;
+      border-radius: 15px;
+      color: #03045e;
+      font-weight: 500;
+    }
+
+    #chat {
+      border: 1px solid #ccc;
+      padding: 15px;
+      height: 300px;
+      overflow-y: auto;
+      background-color: #ffffff;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .message {
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      background-color: #e7f5ff;
+      border-radius: 8px;
+      max-width: 80%;
+    }
+
+    .message.self {
+      background-color: #90e0ef;
+      text-align: right;
+      margin-left: auto;
+    }
+
+    .message.notification {
+      background-color: #ffe066;
+      font-style: italic;
+      text-align: center;
+      color: #5c5c00;
+    }
+
+    #message-form {
+      display: flex;
+      gap: 10px;
+    }
+
+    #message-input {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 10px 16px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #0077b6;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #023e8a;
+    }
+
+    .icon {
+      margin-right: 6px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="user-list">
+    <h3><i class="fas fa-users icon"></i>Online Users</h3>
+    <ul id="users"></ul>
+  </div>
+
+  <div id="chat"></div>
+
+  <form id="message-form">
+    <input type="text" id="message-input" placeholder="Enter your message" required>
+    <button type="submit"><i class="fas fa-paper-plane icon"></i>Send</button>
+  </form>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    const chat = document.getElementById("chat");
+    const usersList = document.getElementById("users");
+    const messageForm = document.getElementById("message-form");
+    const messageInput = document.getElementById("message-input");
+
+    const userName = prompt("Enter your username");
+
+    // Join the chat with entered username
+    socket.emit('join', userName);
+
+    // When a new user joins
+    socket.on("userJoined", (user) => {
+      addMessage(`${user} has joined the chat`, "notification");
+    });
+
+    // Receive and display full user list
+    socket.on("userList", (users) => {
+      usersList.innerHTML = "";
+      users.forEach(user => {
+        const li = document.createElement("li");
+        li.textContent = user;
+        usersList.appendChild(li);
+      });
+    });
+
+    // Handle form submission
+    messageForm.addEventListener("submit", (e) => {
+      e.preventDefault(); // The page should not refresh every time the form is submitted
+
+      const extractMessageText = messageInput.value.trim();
+
+      if (extractMessageText) {
+        socket.emit("chatMessage", { user: userName, text: extractMessageText });
+        addMessage(`${userName}: ${extractMessageText}`, "self");
+        messageInput.value = "";
+      }
+    });
+
+    // Listen for chat message events from the server
+    socket.on("chatMessage", (message) => {
+      if (message.user !== userName) {
+        addMessage(`${message.user}: ${message.text}`, "message");
+      }
+    });
+
+    // Function to handle disconnection of users
+    socket.on("userLeft", (user) => {
+      addMessage(`${user} has left the chat`, "notification");
+    });
+
+    function addMessage(message, type = "message") {
+      const messageElement = document.createElement("div");
+      messageElement.textContent = message;
+      messageElement.classList.add("message");
+      if (type) messageElement.classList.add(type);
+      chat.appendChild(messageElement);
+
+      // Scroll to the bottom of the child container
+      chat.scrollTop = chat.scrollHeight;
+    }
+  </script>
+
+</body>
+
+</html>
